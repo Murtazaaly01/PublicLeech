@@ -68,19 +68,9 @@ async def progress_for_pyrogram(
         )
         try:
             if not message.photo:
-                await message.edit_text(
-                    text="{}\n {}".format(
-                        ud_type,
-                        tmp
-                    )
-                )
+                await message.edit_text(text=f"{ud_type}\n {tmp}")
             else:
-                await message.edit_caption(
-                    caption="{}\n {}".format(
-                        ud_type,
-                        tmp
-                    )
-                )
+                await message.edit_caption(caption=f"{ud_type}\n {tmp}")
         except:
             pass
 
@@ -96,7 +86,7 @@ def humanbytes(size):
     while size > power:
         size /= power
         n += 1
-    return str(round(size, 2)) + " " + Dic_powerN[n] + 'B'
+    return f"{str(round(size, 2))} {Dic_powerN[n]}B"
 
 
 def time_formatter(seconds: int) -> str:
@@ -109,8 +99,7 @@ def time_formatter(seconds: int) -> str:
         "minutes": 60,
         "seconds": 1
     }
-    for age in r_ange_s:
-        divisor = r_ange_s[age]
+    for age, divisor in r_ange_s.items():
         v_m, remainder = divmod(remainder, divisor)
         v_m = int(v_m)
         if v_m != 0:

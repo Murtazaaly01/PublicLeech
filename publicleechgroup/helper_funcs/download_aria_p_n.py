@@ -46,26 +46,22 @@ from publicleechgroup.helper_funcs.r_clone import (
 
 
 async def aria_start():
-    aria2_daemon_start_cmd = []
-    # start the daemon, aria2c command
-    aria2_daemon_start_cmd.append("aria2c")
-    # aria2_daemon_start_cmd.append("--allow-overwrite=true")
-    aria2_daemon_start_cmd.append("--daemon=true")
-    # aria2_daemon_start_cmd.append(f"--dir={DOWNLOAD_LOCATION}")
-    # TODO: this does not work, need to investigate this.
-    # but for now, https://t.me/TrollVoiceBot?start=858
-    # maybe, :\ but https://t.me/c/1374712761/1142
-    aria2_daemon_start_cmd.append("--enable-rpc")
-    aria2_daemon_start_cmd.append("--follow-torrent=mem")
-    aria2_daemon_start_cmd.append("--max-connection-per-server=10")
-    aria2_daemon_start_cmd.append("--min-split-size=10M")
-    aria2_daemon_start_cmd.append("--rpc-listen-all=false")
-    aria2_daemon_start_cmd.append(f"--rpc-listen-port={ARIA_TWO_STARTED_PORT}")
-    aria2_daemon_start_cmd.append("--rpc-max-request-size=1024M")
-    aria2_daemon_start_cmd.append("--seed-ratio=0.0")
-    aria2_daemon_start_cmd.append("--seed-time=1")
-    aria2_daemon_start_cmd.append("--split=10")
-    aria2_daemon_start_cmd.append(f"--bt-stop-timeout={MAX_TIME_TO_WAIT_FOR_TORRENTS_TO_START}")
+    aria2_daemon_start_cmd = [
+        "aria2c",
+        "--daemon=true",
+        "--enable-rpc",
+        "--follow-torrent=mem",
+        "--max-connection-per-server=10",
+        "--min-split-size=10M",
+        "--rpc-listen-all=false",
+        f"--rpc-listen-port={ARIA_TWO_STARTED_PORT}",
+        "--rpc-max-request-size=1024M",
+        "--seed-ratio=0.0",
+        "--seed-time=1",
+        "--split=10",
+        f"--bt-stop-timeout={MAX_TIME_TO_WAIT_FOR_TORRENTS_TO_START}",
+    ]
+
     #
     LOGGER.info(aria2_daemon_start_cmd)
     #
@@ -77,14 +73,11 @@ async def aria_start():
     stdout, stderr = await process.communicate()
     LOGGER.info(stdout)
     LOGGER.info(stderr)
-    aria2 = aria2p.API(
+    return aria2p.API(
         aria2p.Client(
-            host="http://localhost",
-            port=ARIA_TWO_STARTED_PORT,
-            secret=""
+            host="http://localhost", port=ARIA_TWO_STARTED_PORT, secret=""
         )
     )
-    return aria2
 
 
 def add_magnet(aria_instance, magnetic_link, c_file_name):
@@ -101,7 +94,7 @@ def add_magnet(aria_instance, magnetic_link, c_file_name):
     except Exception as e:
         return False, "<b>FAILED</b> \n" + str(e) + " \nPlease do not send SLOW links. Read /help"
     else:
-        return True, "" + download.gid + ""
+        return True, f"{download.gid}"
 
 
 def add_torrent(aria_instance, torrent_file_path):
@@ -119,7 +112,7 @@ def add_torrent(aria_instance, torrent_file_path):
         except Exception as e:
             return False, "<b>FAILED</b> \n" + str(e) + " \nPlease do not send SLOW links. Read /help"
         else:
-            return True, "" + download.gid + ""
+            return True, f"{download.gid}"
     else:
         return False, "<b>FAILED</b> \n\nPlease try other sources to get workable link"
 
@@ -140,7 +133,7 @@ def add_url(aria_instance, text_url, c_file_name):
     except Exception as e:
         return False, "<b>FAILED</b> \n" + str(e) + " \nPlease do not send SLOW links. Read /help"
     else:
-        return True, "" + download.gid + ""
+        return True, f"{download.gid}"
 
 
 async def fake_etairporpa_call(
@@ -167,8 +160,9 @@ async def fake_etairporpa_call(
         sent_message_to_update_tg_p,
         None
     )
-    has_metadata = aria_instance.client.tell_status(err_message, ["followedBy"])
-    if has_metadata:
+    if has_metadata := aria_instance.client.tell_status(
+        err_message, ["followedBy"]
+    ):
         err_message = has_metadata["followedBy"][0]
         await check_progress_for_dl(
             aria_instance,
@@ -233,8 +227,9 @@ async def call_apropriate_function(
         sent_message_to_update_tg_p,
         None
     )
-    has_metadata = aria_instance.client.tell_status(err_message, ["followedBy"])
-    if has_metadata:
+    if has_metadata := aria_instance.client.tell_status(
+        err_message, ["followedBy"]
+    ):
         err_message = has_metadata["followedBy"][0]
         await check_progress_for_dl(
             aria_instance,
@@ -244,7 +239,7 @@ async def call_apropriate_function(
         )
     await asyncio.sleep(1)
     file = aria_instance.get_download(err_message)
-    to_upload_file = file.name 
+    to_upload_file = file.name
     """os.path.join(
         c_file_name,
         file.name
@@ -305,8 +300,10 @@ async def call_apropriate_function(
 async def check_progress_for_dl(aria2, gid, event, previous_message):
     try:
         file = aria2.get_download(gid)
-        complete = file.is_complete
-        if not complete:
+        if complete := file.is_complete:
+            await event.edit(f"File Downloaded Successfully: <code>{file.name}</code>")
+            return True
+        else:
             if not file.error_message:
                 msg = ""
                 # sometimes, this weird https://t.me/c/1220993104/392975
@@ -343,9 +340,6 @@ async def check_progress_for_dl(aria2, gid, event, previous_message):
             return await check_progress_for_dl(
                 aria2, gid, event, previous_message
             )
-        else:
-            await event.edit(f"File Downloaded Successfully: <code>{file.name}</code>")
-            return True
     except aria2p.client.ClientException:
         pass
     except MessageNotModified:
@@ -355,21 +349,17 @@ async def check_progress_for_dl(aria2, gid, event, previous_message):
     except RecursionError:
         file.remove(force=True)
         await event.edit(
-            "Download Auto Canceled :\n\n"
-            "Your Torrent/Link {} is Dead.".format(
-                file.name
-            )
+            f"Download Auto Canceled :\n\nYour Torrent/Link {file.name} is Dead."
         )
+
         return False
     except Exception as e:
         LOGGER.info(str(e))
         if " not found" in str(e) or "'file'" in str(e):
-            await event.edit(
-                "Download Canceled :\n<code>{}</code>".format(file.name)
-            )
-            return False
+            await event.edit(f"Download Canceled :\n<code>{file.name}</code>")
         else:
             LOGGER.info(str(e))
-            await event.edit("<u>error</u> :\n<code>{}</code> \n\n#error".format(str(e)))
-            return False
+            await event.edit(f"<u>error</u> :\n<code>{str(e)}</code> \n\n#error")
+
+        return False
 # https://github.com/jaskaranSM/UniBorg/blob/6d35cf452bce1204613929d4da7530058785b6b1/stdplugins/aria.py#L136-L164

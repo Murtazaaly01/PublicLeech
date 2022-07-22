@@ -92,7 +92,7 @@ class Bot(Client):
         # create download directory, if not exist
         if not os.path.isdir(DOWNLOAD_LOCATION):
             os.makedirs(DOWNLOAD_LOCATION)
-        
+
         LOGGER(__name__).info(
             "@PublicLeechGroup, trying to add handlers"
         )
@@ -127,7 +127,7 @@ class Bot(Client):
                     [Commandi.LEECH]
                 ) & filters.chat(chats=AUTH_CHANNEL)
             ))
-        
+
             # YTDL command
             self.add_handler(MessageHandler(
                 incoming_youtube_dl_f,

@@ -39,26 +39,31 @@ from publicleechgroup.helper_funcs.r_clone import (
 
 
 async def get_markup(message: Message):
-    inline_keyboard = []
-    ikeyboard = []
-    ikeyboard.append(InlineKeyboardButton(
-        "leech 🤔🤔",
-        callback_data=("leech").encode("UTF-8")
-    ))
+    ikeyboard = [
+        InlineKeyboardButton(
+            "leech 🤔🤔", callback_data=("leech").encode("UTF-8")
+        )
+    ]
+
     ikeyboard.append(InlineKeyboardButton(
         "youtube-dl",
         callback_data=("ytdl").encode("UTF-8")
     ))
-    inline_keyboard.append(ikeyboard)
+    inline_keyboard = [ikeyboard]
     ikeyboard = []
-    ikeyboard.append(InlineKeyboardButton(
-        "A leech TAR . GZ  🤔🤔",
-        callback_data=("leecha").encode("UTF-8")
-    ))
-    ikeyboard.append(InlineKeyboardButton(
-        "A youtube-dl TAR . GZ",
-        callback_data=("ytdla").encode("UTF-8")
-    ))
+    ikeyboard.extend(
+        (
+            InlineKeyboardButton(
+                "A leech TAR . GZ  🤔🤔",
+                callback_data=("leecha").encode("UTF-8"),
+            ),
+            InlineKeyboardButton(
+                "A youtube-dl TAR . GZ",
+                callback_data=("ytdla").encode("UTF-8"),
+            ),
+        )
+    )
+
     inline_keyboard.append(ikeyboard)
     ikeyboard = []
     if R_CLONE_CONF_URI:

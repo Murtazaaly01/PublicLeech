@@ -38,8 +38,7 @@ async def extract_youtube_dl_formats(url, yt_dl_user_name, yt_dl_pass_word, user
         url
     ]
     if "hotstar" in url:
-        command_to_exec.append("--geo-bypass-country")
-        command_to_exec.append("IN")
+        command_to_exec.extend(("--geo-bypass-country", "IN"))
     #
     if yt_dl_user_name is not None:
         command_to_exec.append("--username")
@@ -73,13 +72,12 @@ async def extract_youtube_dl_formats(url, yt_dl_user_name, yt_dl_pass_word, user
         x_reponse = t_response
         response_json = []
         if "\n" in x_reponse:
-            for yu_r in x_reponse.split("\n"):
-                response_json.append(json.loads(yu_r))
+            response_json.extend(json.loads(yu_r) for yu_r in x_reponse.split("\n"))
         else:
             response_json.append(json.loads(x_reponse))
         # response_json = json.loads(x_reponse)
-        save_ytdl_json_path = user_working_dir + \
-            "/" + str("ytdleech") + ".json"
+        save_ytdl_json_path = (user_working_dir + "/" + "ytdleech") + ".json"
+
         with open(save_ytdl_json_path, "w", encoding="utf8") as outfile:
             json.dump(response_json, outfile, ensure_ascii=False)
         # logger.info(response_json)
@@ -116,57 +114,62 @@ async def extract_youtube_dl_formats(url, yt_dl_user_name, yt_dl_pass_word, user
                     approx_file_size = ""
                     if "filesize" in formats:
                         approx_file_size = humanbytes(formats["filesize"])
-                    n_ue_sc = bool("video only" in format_string)
-                    scneu = "DL" if not n_ue_sc else "XM"
-                    dipslay_str_uon = " " + format_string + " (" + format_ext.upper() + ") " + approx_file_size + " "
-                    cb_string_video = "{}|{}|{}|{}".format(
-                        "video", format_id, format_ext, scneu
-                    )
+                    n_ue_sc = "video only" in format_string
+                    scneu = "XM" if n_ue_sc else "DL"
+                    dipslay_str_uon = f" {format_string} ({format_ext.upper()}) {approx_file_size} "
+
+                    cb_string_video = f"video|{format_id}|{format_ext}|{scneu}"
                     ikeyboard = []
-                    if "drive.google.com" in url:
-                        if format_id == "source":
-                            ikeyboard = [
-                                InlineKeyboardButton(
-                                    dipslay_str_uon,
-                                    callback_data=(cb_string_video).encode("UTF-8")
-                                )
-                            ]
-                    else:
-                        if format_string is not None and not "audio only" in format_string:
-                            ikeyboard = [
-                                InlineKeyboardButton(
-                                    dipslay_str_uon,
-                                    callback_data=(cb_string_video).encode("UTF-8")
-                                )
-                            ]
-                        else:
-                            # special weird case :\
-                            ikeyboard = [
-                                InlineKeyboardButton(
-                                    "SVideo [" +
-                                    "] ( " +
-                                    approx_file_size + " )",
-                                    callback_data=(cb_string_video).encode("UTF-8")
-                                )
-                            ]
+                    if (
+                        "drive.google.com" in url
+                        and format_id == "source"
+                        or "drive.google.com" not in url
+                        and format_string is not None
+                        and "audio only" not in format_string
+                    ):
+                        ikeyboard = [
+                            InlineKeyboardButton(
+                                dipslay_str_uon,
+                                callback_data=(cb_string_video).encode("UTF-8")
+                            )
+                        ]
+                    elif "drive.google.com" not in url:
+                        # special weird case :\
+                        ikeyboard = [
+                            InlineKeyboardButton(
+                                "SVideo [" +
+                                "] ( " +
+                                approx_file_size + " )",
+                                callback_data=(cb_string_video).encode("UTF-8")
+                            )
+                        ]
                     inline_keyboard.append(ikeyboard)
                 if duration is not None:
-                    inline_keyboard.append([
-                        InlineKeyboardButton(
-                            "MP3 (64 kbps)", callback_data="audio|64k|mp3|_"),
-                        InlineKeyboardButton(
-                            "MP3 (128 kbps)", callback_data="audio|128k|mp3|_")
-                    ])
-                    inline_keyboard.append([
-                        InlineKeyboardButton(
-                            "MP3 (320 kbps)", callback_data="audio|320k|mp3|_")
-                    ])
+                    inline_keyboard.extend(
+                        (
+                            [
+                                InlineKeyboardButton(
+                                    "MP3 (64 kbps)",
+                                    callback_data="audio|64k|mp3|_",
+                                ),
+                                InlineKeyboardButton(
+                                    "MP3 (128 kbps)",
+                                    callback_data="audio|128k|mp3|_",
+                                ),
+                            ],
+                            [
+                                InlineKeyboardButton(
+                                    "MP3 (320 kbps)",
+                                    callback_data="audio|320k|mp3|_",
+                                )
+                            ],
+                        )
+                    )
+
             else:
                 format_id = current_r_json["format_id"]
                 format_ext = current_r_json["ext"]
-                cb_string_video = "{}|{}|{}|{}".format(
-                    "video", format_id, format_ext, "DL"
-                )
+                cb_string_video = f"video|{format_id}|{format_ext}|DL"
                 inline_keyboard.append([
                     InlineKeyboardButton(
                         "SVideo",

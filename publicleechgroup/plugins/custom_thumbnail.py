@@ -27,14 +27,14 @@ async def save_thumb_nail(_, message):
         "thumbnails"
     )
     thumb_image_path = os.path.join(
-        thumbnail_location,
-        str(message.from_user.id) + ".jpg"
+        thumbnail_location, f"{str(message.from_user.id)}.jpg"
     )
+
     ismgs = await message.reply_text(Loilacaztion.PROCESSING)
     if message.reply_to_message is not None:
         if not os.path.isdir(thumbnail_location):
             os.makedirs(thumbnail_location)
-        download_location = thumbnail_location + "/"
+        download_location = f"{thumbnail_location}/"
         downloaded_file_name = await message.reply_to_message.download(
             file_name=download_location
         )
@@ -57,9 +57,9 @@ async def clear_thumb_nail(_, message):
         "thumbnails"
     )
     thumb_image_path = os.path.join(
-        thumbnail_location,
-        str(message.from_user.id) + ".jpg"
+        thumbnail_location, f"{str(message.from_user.id)}.jpg"
     )
+
     ismgs = await message.reply_text(Loilacaztion.PROCESSING)
     if os.path.exists(thumb_image_path):
         os.remove(thumb_image_path)
